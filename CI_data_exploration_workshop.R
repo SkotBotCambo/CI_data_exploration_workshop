@@ -1,35 +1,62 @@
+
+#SET PARAMETERS
 setwd("e:/py/CI_data_exploration_workshop")
 tv = read.csv('TV-20140605141210_1231.csv', skip=62)
-colnames(tv)
 
-library(maps)
-map("world")
-
-map("world", "costa rica")
-
-library(rJava)
-library(OpenStreetMap)
-library(rgdal)
-library(maps)
-library(RColorBrewer)
-
-
-wcMap <- openmap(c(12, -86), c(8,-82.2),
-                 type="stamen-watercolor")
-wcMap <- openproj(wcMap, projection = "+proj=longlat")
-par(mfrow=c(1,1))
-load("crMap0.RData")
-gadm0 <- gadm
-plot(wcMap, raster=TRUE)
-plot(gadm0, add=TRUE, lwd=4, border="black")
 
 #FIX DATE
 tv$date <- as.Date(tv$Photo.Date, format="%Y-%m-%d")
 
 #ADD SPECIES
 animals <- unique(sort(paste0(tv$Genus, " ", tv$Species)))
-animals.col <- colorRampPalette(c("blue", "red"))(length(animals))
 
+#ADD A COLOR FOR EACH SPECIES
+animals.col <- colorRampPalette(c("blue", 
+                                  "red",
+                                  "green",
+                                  "yellow",
+                                  "black",
+                                  "white"))(length(animals))
+
+
+#USE THE MAPS LIBRARY FOR SIMPLE MAPPING
+library(maps)
+map("world")
+map("world", "costa rica")
+
+#READ IN SOME OTHER PACKAGES FOR MORE COMPLEX MAPPING
+library(rJava)
+library(OpenStreetMap)
+library(rgdal)
+library(maps)
+library(RColorBrewer)
+
+#MAKE A WATERCOLOR MAP
+par(mfrow=c(1,1))
+wcMap <- openmap(c(12, -86), c(8,-82.2),
+                 type="stamen-watercolor")
+
+wcMap <- openproj(wcMap, projection = "+proj=longlat")
+plot(wcMap, raster=TRUE)
+
+#MAKE A TONER MAP
+bwMap <- openproj(bwMap, projection = "+proj=longlat")
+
+plot(bwMap, raster=TRUE)
+names(bwMap)
+
+#MAKE A BASIC OUTLINE MAP #From http://www.gadm.org/download
+par(mfrow=c(1,1))
+load("crMap0.RData")
+
+#PLOT THE OUTLINE OVER THE WATERCOLOR MAP
+gadm0 <- gadm
+plot(wcMap, raster=TRUE)
+
+#ADD BORDER
+plot(gadm0, add=TRUE, lwd=5, border="black")
+
+#ADD ANIMALS
 for (i in 1:length(animals)){
   
   points(tv$Longitude[which(paste0(tv$Genus, " ", tv$Species)== animals[i])],
@@ -38,9 +65,17 @@ for (i in 1:length(animals)){
          cex=tv$Number.of.Animals^(1/4),
          col=adjustcolor(animals.col[i], alpha.f=0.1))
 }
+legend(x="bottomleft",
+       col=adjustcolor(animals.col, alpha.f=0.3),
+       pch=16,
+       legend=animals,
+       cex=0.7,
+       ncol=3, 
+       bty="n")
 
 
-#SIMPLE MAP
+
+#SIMPLE MAPS FOR EACH SPECIES
 load("crMap.RData") #From http://www.gadm.org/download
 
 par(mar=c(0,0,2,0))
